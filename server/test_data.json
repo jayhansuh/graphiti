@@ -1,0 +1,26 @@
+{
+  "group_id": "test-group-001",
+  "messages": [
+    {
+      "content": "Alice is a software engineer who works at TechCorp. She specializes in Python and machine learning.",
+      "role_type": "user",
+      "role": "Alice",
+      "timestamp": "2025-08-02T10:00:00Z",
+      "name": "Alice Introduction"
+    },
+    {
+      "content": "Bob is Alice's colleague. He's a frontend developer who loves React and TypeScript.",
+      "role_type": "user",
+      "role": "Bob", 
+      "timestamp": "2025-08-02T10:05:00Z",
+      "name": "Bob Introduction"
+    },
+    {
+      "content": "Alice and Bob are working together on a new AI-powered dashboard project for their company.",
+      "role_type": "system",
+      "role": "System",
+      "timestamp": "2025-08-02T10:10:00Z",
+      "name": "Project Context"
+    }
+  ]
+}
