@@ -1,0 +1,62 @@
+server {
+    listen 80;
+    server_name your-domain.com;  # Replace with your actual domain
+
+    # Security headers
+    add_header X-Content-Type-Options nosniff;
+    add_header X-Frame-Options DENY;
+    add_header X-XSS-Protection "1; mode=block";
+    add_header Referrer-Policy "strict-origin-when-cross-origin";
+
+    # Rate limiting (configured in main nginx.conf if needed)
+
+    # Proxy settings
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+
+    # WebSocket support
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+
+    # Timeouts
+    proxy_connect_timeout 60s;
+    proxy_send_timeout 60s;
+    proxy_read_timeout 60s;
+
+    # Main location - proxy to Graphiti
+    location / {
+        proxy_pass http://localhost:8000;
+        
+        # CORS headers (if needed)
+        add_header Access-Control-Allow-Origin "*" always;
+        add_header Access-Control-Allow-Methods "GET, POST, DELETE, OPTIONS" always;
+        add_header Access-Control-Allow-Headers "Content-Type, Authorization" always;
+        
+        if ($request_method = OPTIONS) {
+            return 204;
+        }
+    }
+
+    # Static files optimization
+    location /static/ {
+        proxy_pass http://localhost:8000/static/;
+        expires 1d;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # Health check endpoint
+    location /healthcheck {
+        proxy_pass http://localhost:8000/healthcheck;
+        access_log off;
+    }
+
+    # Increase body size for data ingestion
+    client_max_body_size 10M;
+
+    # Logging
+    access_log /var/log/nginx/graphiti_access.log;
+    error_log /var/log/nginx/graphiti_error.log;
+}

@@ -1,0 +1,38 @@
+# Environment files
+.env
+.env.*
+!.env.example
+!deployment/.env.example
+
+# Logs
+*.log
+logs/
+/var/log/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Deployment state
+deployment/DEPLOYMENT_STATE.md
+
+# Session-specific docs
+docs/
+
+# Temporary files
+*.tmp
+*.bak
+*~

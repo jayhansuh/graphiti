@@ -1,0 +1,22 @@
+[Unit]
+Description=Graphiti API Service
+After=network.target
+
+[Service]
+User=YOUR_USER
+Group=YOUR_GROUP
+WorkingDirectory=/path/to/graphiti/server
+Environment="PATH=/path/to/graphiti/server/.venv/bin"
+ExecStart=/path/to/graphiti/server/.venv/bin/python -m gunicorn graph_service.main:app \
+    --workers 2 \
+    --worker-class uvicorn.workers.UvicornWorker \
+    --bind 127.0.0.1:8000 \
+    --access-logfile /var/log/graphiti/access.log \
+    --error-logfile /var/log/graphiti/error.log \
+    --log-level info
+
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
