@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Graphiti API Playground</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌐 Graphiti API Playground</h1>
+            <div class="stats" id="stats">
+                <span>Entities: <strong id="entity-count">0</strong></span>
+                <span>Episodes: <strong id="episode-count">0</strong></span>
+                <span>Relations: <strong id="relation-count">0</strong></span>
+            </div>
+        </header>
+
+        <!-- Graph Visualization Section -->
+        <section class="visualization-section">
+            <div class="section-header">
+                <h2>Knowledge Graph Visualization</h2>
+                <div class="controls">
+                    <input type="text" id="group-filter" placeholder="Filter by group ID...">
+                    <button onclick="refreshGraph()">🔄 Refresh</button>
+                </div>
+            </div>
+            <div id="graph-container"></div>
+        </section>
+
+        <!-- API Testing Section -->
+        <section class="api-section">
+            <h2>API Testing Interface</h2>
+            
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('messages')">📝 Messages</button>
+                <button class="tab" onclick="switchTab('search')">🔍 Search</button>
+                <button class="tab" onclick="switchTab('episodes')">📚 Episodes</button>
+                <button class="tab" onclick="switchTab('entity')">🏷️ Entity</button>
+                <button class="tab" onclick="switchTab('memory')">🧠 Memory</button>
+                <button class="tab" onclick="switchTab('management')">⚙️ Management</button>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="tab-content">
+                <!-- Messages Tab -->
+                <div id="messages-tab" class="tab-pane active">
+                    <h3>Add Messages</h3>
+                    <div class="endpoint-info">POST /messages</div>
+                    <textarea id="messages-input" class="json-input" rows="15">{
+  "group_id": "test-group-001",
+  "messages": [
+    {
+      "content": "Sarah is a data scientist at DataCorp. She specializes in neural networks.",
+      "role_type": "user",
+      "role": "Sarah",
+      "timestamp": "2025-08-02T14:00:00Z",
+      "name": "Sarah Introduction"
+    },
+    {
+      "content": "John is Sarah's manager. He leads the AI research team.",
+      "role_type": "user",
+      "role": "John",
+      "timestamp": "2025-08-02T14:05:00Z",
+      "name": "John Introduction"
+    }
+  ]
+}</textarea>
+                    <button onclick="executeRequest('messages')" class="execute-btn">Execute Request</button>
+                </div>
+
+                <!-- Search Tab -->
+                <div id="search-tab" class="tab-pane">
+                    <h3>Search Facts</h3>
+                    <div class="endpoint-info">POST /search</div>
+                    <textarea id="search-input" class="json-input" rows="8">{
+  "group_ids": ["test-group-001"],
+  "query": "Who works with AI?",
+  "max_facts": 10
+}</textarea>
+                    <button onclick="executeRequest('search')" class="execute-btn">Execute Request</button>
+                </div>
+
+                <!-- Episodes Tab -->
+                <div id="episodes-tab" class="tab-pane">
+                    <h3>Get Episodes</h3>
+                    <div class="endpoint-info">GET /episodes/{group_id}</div>
+                    <div class="input-group">
+                        <input type="text" id="episodes-group-id" placeholder="Group ID" value="test-group-001">
+                        <input type="number" id="episodes-last-n" placeholder="Last N" value="10">
+                    </div>
+                    <button onclick="executeRequest('episodes')" class="execute-btn">Execute Request</button>
+                </div>
+
+                <!-- Entity Tab -->
+                <div id="entity-tab" class="tab-pane">
+                    <h3>Add Entity Node</h3>
+                    <div class="endpoint-info">POST /entity-node</div>
+                    <textarea id="entity-input" class="json-input" rows="8">{
+  "uuid": "custom-entity-001",
+  "group_id": "test-group-001",
+  "name": "Machine Learning Team",
+  "summary": "A team focused on developing ML solutions"
+}</textarea>
+                    <button onclick="executeRequest('entity')" class="execute-btn">Execute Request</button>
+                </div>
+
+                <!-- Memory Tab -->
+                <div id="memory-tab" class="tab-pane">
+                    <h3>Get Memory</h3>
+                    <div class="endpoint-info">POST /get-memory</div>
+                    <textarea id="memory-input" class="json-input" rows="12">{
+  "group_id": "test-group-001",
+  "max_facts": 10,
+  "center_node_uuid": null,
+  "messages": [
+    {
+      "content": "Tell me about the team",
+      "role_type": "user",
+      "role": "User"
+    }
+  ]
+}</textarea>
+                    <button onclick="executeRequest('memory')" class="execute-btn">Execute Request</button>
+                </div>
+
+                <!-- Management Tab -->
+                <div id="management-tab" class="tab-pane">
+                    <h3>Management Operations</h3>
+                    <div class="management-controls">
+                        <div class="control-group">
+                            <h4>Delete Operations</h4>
+                            <div class="input-group">
+                                <input type="text" id="delete-group-id" placeholder="Group ID to delete">
+                                <button onclick="deleteGroup()">Delete Group</button>
+                            </div>
+                            <div class="input-group">
+                                <input type="text" id="delete-episode-uuid" placeholder="Episode UUID to delete">
+                                <button onclick="deleteEpisode()">Delete Episode</button>
+                            </div>
+                            <div class="input-group">
+                                <input type="text" id="delete-edge-uuid" placeholder="Edge UUID to delete">
+                                <button onclick="deleteEdge()">Delete Edge</button>
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <h4>Clear All Data</h4>
+                            <button onclick="clearAllData()" class="danger-btn">⚠️ Clear All Data</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Response Section -->
+            <div class="response-section">
+                <h3>Response</h3>
+                <pre id="response-output"><code class="language-json">Response will appear here...</code></pre>
+            </div>
+        </section>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+    <script src="/static/js/graph-viz.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
