@@ -1,11 +1,12 @@
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from graph_service.config import get_settings
+from graph_service.auth import verify_api_key
 from graph_service.routers import ingest, retrieve
 from graph_service.zep_graphiti import initialize_graphiti, ZepGraphitiDep
 
@@ -40,7 +41,7 @@ async def healthcheck():
     return JSONResponse(content={'status': 'healthy'}, status_code=200)
 
 
-@app.get('/graph-data')
+@app.get('/graph-data', dependencies=[Depends(verify_api_key)])
 async def get_graph_data(graphiti: ZepGraphitiDep, group_id: str | None = None):
     """Get graph data for visualization"""
     try:
@@ -102,7 +103,7 @@ async def get_graph_data(graphiti: ZepGraphitiDep, group_id: str | None = None):
         )
 
 
-@app.get('/stats')
+@app.get('/stats', dependencies=[Depends(verify_api_key)])
 async def get_stats(graphiti: ZepGraphitiDep):
     """Get graph statistics"""
     try:

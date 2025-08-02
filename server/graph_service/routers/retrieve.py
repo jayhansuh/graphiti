@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Depends, status
 
 from graph_service.dto import (
     GetMemoryRequest,
@@ -10,8 +10,9 @@ from graph_service.dto import (
     SearchResults,
 )
 from graph_service.zep_graphiti import ZepGraphitiDep, get_fact_result_from_edge
+from graph_service.auth import verify_api_key
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(verify_api_key)])
 
 
 @router.post('/search', status_code=status.HTTP_200_OK)

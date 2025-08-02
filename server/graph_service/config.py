@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     neo4j_uri: str
     neo4j_user: str
     neo4j_password: str
+    api_key: str | None = Field(None, description='API key for securing endpoints')
 
     model_config = SettingsConfigDict(env_file='.env', extra='ignore')
 
