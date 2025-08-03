@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Auth Test</title>
+</head>
+<body>
+    <h1>Testing Authentication...</h1>
+    <div id="result"></div>
+    
+    <script>
+        // Clear localStorage to test redirect
+        localStorage.clear();
+        
+        // Test if we would be redirected
+        const token = localStorage.getItem('graphiti_token');
+        const apiKey = localStorage.getItem('graphiti_api_key');
+        
+        if (!token && !apiKey) {
+            document.getElementById('result').innerHTML = 
+                '<p style="color: green;">✓ Would redirect to login (no auth found)</p>' +
+                '<p>Redirecting in 3 seconds...</p>';
+            
+            setTimeout(() => {
+                window.location.href = '/login?redirect=/test-auth.html';
+            }, 3000);
+        } else {
+            document.getElementById('result').innerHTML = 
+                '<p style="color: red;">✗ Has authentication, would not redirect</p>';
+        }
+    </script>
+</body>
+</html>

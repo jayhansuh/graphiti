@@ -1,5 +1,46 @@
 // API Playground functionality
 
+// Authentication handling
+function getAuthHeaders() {
+    const headers = { 'Content-Type': 'application/json' };
+    
+    // Check for JWT token first
+    const token = localStorage.getItem('graphiti_token');
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        return headers;
+    }
+    
+    // Fall back to API key
+    const apiKey = localStorage.getItem('graphiti_api_key');
+    if (apiKey) {
+        headers['X-API-Key'] = apiKey;
+        return headers;
+    }
+    
+    return headers;
+}
+
+// Check if user is authenticated
+function checkAuth() {
+    const token = localStorage.getItem('graphiti_token');
+    const apiKey = localStorage.getItem('graphiti_api_key');
+    
+    if (!token && !apiKey) {
+        // Redirect to login page
+        window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+        return false;
+    }
+    return true;
+}
+
+// Logout function
+function logout() {
+    localStorage.removeItem('graphiti_token');
+    localStorage.removeItem('graphiti_api_key');
+    window.location.href = '/login';
+}
+
 // Switch between tabs
 function switchTab(tabName) {
     // Update tab buttons
@@ -28,7 +69,7 @@ async function executeRequest(endpoint) {
                 const messagesData = JSON.parse(document.getElementById('messages-input').value);
                 response = await fetch('/messages', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: getAuthHeaders(),
                     body: JSON.stringify(messagesData)
                 });
                 // Refresh graph after adding messages
@@ -44,7 +85,7 @@ async function executeRequest(endpoint) {
                 const searchData = JSON.parse(document.getElementById('search-input').value);
                 response = await fetch('/search', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: getAuthHeaders(),
                     body: JSON.stringify(searchData)
                 });
                 break;
@@ -52,14 +93,16 @@ async function executeRequest(endpoint) {
             case 'episodes':
                 const groupId = document.getElementById('episodes-group-id').value;
                 const lastN = document.getElementById('episodes-last-n').value;
-                response = await fetch(`/episodes/${groupId}?last_n=${lastN}`);
+                response = await fetch(`/episodes/${groupId}?last_n=${lastN}`, {
+                    headers: getAuthHeaders()
+                });
                 break;
                 
             case 'entity':
                 const entityData = JSON.parse(document.getElementById('entity-input').value);
                 response = await fetch('/entity-node', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: getAuthHeaders(),
                     body: JSON.stringify(entityData)
                 });
                 // Refresh graph after adding entity
@@ -73,7 +116,7 @@ async function executeRequest(endpoint) {
                 const memoryData = JSON.parse(document.getElementById('memory-input').value);
                 response = await fetch('/get-memory', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: getAuthHeaders(),
                     body: JSON.stringify(memoryData)
                 });
                 break;
@@ -100,7 +143,10 @@ async function deleteGroup() {
     }
     
     try {
-        const response = await fetch(`/group/${groupId}`, { method: 'DELETE' });
+        const response = await fetch(`/group/${groupId}`, { 
+            method: 'DELETE',
+            headers: getAuthHeaders()
+        });
         const data = await response.json();
         displayResponse(data, response.ok);
         
@@ -120,7 +166,10 @@ async function deleteEpisode() {
     }
     
     try {
-        const response = await fetch(`/episode/${uuid}`, { method: 'DELETE' });
+        const response = await fetch(`/episode/${uuid}`, { 
+            method: 'DELETE',
+            headers: getAuthHeaders()
+        });
         const data = await response.json();
         displayResponse(data, response.ok);
         
@@ -140,7 +189,10 @@ async function deleteEdge() {
     }
     
     try {
-        const response = await fetch(`/entity-edge/${uuid}`, { method: 'DELETE' });
+        const response = await fetch(`/entity-edge/${uuid}`, { 
+            method: 'DELETE',
+            headers: getAuthHeaders()
+        });
         const data = await response.json();
         displayResponse(data, response.ok);
         
@@ -162,7 +214,10 @@ async function clearAllData() {
     }
     
     try {
-        const response = await fetch('/clear', { method: 'POST' });
+        const response = await fetch('/clear', { 
+            method: 'POST',
+            headers: getAuthHeaders()
+        });
         const data = await response.json();
         displayResponse(data, response.ok);
         
@@ -199,6 +254,11 @@ function formatJSON(textareaId) {
 
 // Add event listeners for JSON formatting
 document.addEventListener('DOMContentLoaded', () => {
+    // Check authentication first
+    if (!checkAuth()) {
+        return; // checkAuth will redirect to login page
+    }
+    
     // Format JSON on blur
     document.querySelectorAll('.json-input').forEach(textarea => {
         textarea.addEventListener('blur', () => {

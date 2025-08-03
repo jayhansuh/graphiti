@@ -3,6 +3,30 @@ let network = null;
 let nodes = null;
 let edges = null;
 
+// Import auth headers function from app.js (it's loaded before this script)
+// If getAuthHeaders is not defined, create a fallback
+if (typeof getAuthHeaders === 'undefined') {
+    function getAuthHeaders() {
+        const headers = { 'Content-Type': 'application/json' };
+        
+        // Check for JWT token first
+        const token = localStorage.getItem('graphiti_token');
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+            return headers;
+        }
+        
+        // Fall back to API key
+        const apiKey = localStorage.getItem('graphiti_api_key');
+        if (apiKey) {
+            headers['X-API-Key'] = apiKey;
+            return headers;
+        }
+        
+        return headers;
+    }
+}
+
 // Initialize the graph
 function initializeGraph() {
     const container = document.getElementById('graph-container');
@@ -102,7 +126,9 @@ function initializeGraph() {
 async function loadGraphData(groupId = null) {
     try {
         const url = groupId ? `/graph-data?group_id=${groupId}` : '/graph-data';
-        const response = await fetch(url);
+        const response = await fetch(url, {
+            headers: getAuthHeaders()
+        });
         const data = await response.json();
         
         // Clear existing data
@@ -202,7 +228,9 @@ async function refreshGraph() {
 // Update statistics
 async function updateStats() {
     try {
-        const response = await fetch('/stats');
+        const response = await fetch('/stats', {
+            headers: getAuthHeaders()
+        });
         const stats = await response.json();
         
         document.getElementById('entity-count').textContent = stats.entity_count || 0;
@@ -222,6 +250,16 @@ function showError(message) {
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
+    // Check authentication first
+    const token = localStorage.getItem('graphiti_token');
+    const apiKey = localStorage.getItem('graphiti_api_key');
+    
+    if (!token && !apiKey) {
+        // Don't initialize if not authenticated
+        // app.js will handle the redirect
+        return;
+    }
+    
     initializeGraph();
     loadGraphData();
     updateStats();
