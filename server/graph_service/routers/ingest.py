@@ -16,6 +16,7 @@ from graph_service.models.database import get_db
 from graph_service.models.user import Permission, User
 from graph_service.services.ownership_service import OwnershipService
 from graph_service.zep_graphiti import ZepGraphitiDep
+from graph_service.backup import ChangeType
 
 
 class AsyncWorker:
@@ -105,6 +106,23 @@ async def add_messages(
             source=EpisodeType.message,
             source_description=m.source_description,
         )
+        
+        # Track change for backup if backup worker is available
+        from graph_service.main import backup_worker
+        if backup_worker:
+            await backup_worker.track_change(
+                change_type=ChangeType.CREATE,
+                entity_type='episode',
+                entity_id=m.uuid,
+                data={
+                    'group_id': request.group_id,
+                    'name': m.name,
+                    'content': m.content,
+                    'role': m.role,
+                    'timestamp': m.timestamp.isoformat() if m.timestamp else None,
+                },
+                metadata={'source': 'messages_endpoint'}
+            )
 
     for m in request.messages:
         await async_worker.queue.put(partial(add_messages_task, m))
@@ -138,6 +156,22 @@ async def add_entity_node(
         name=request.name,
         summary=request.summary,
     )
+    
+    # Track change for backup if backup worker is available
+    from graph_service.main import backup_worker
+    if backup_worker:
+        await backup_worker.track_change(
+            change_type=ChangeType.CREATE,
+            entity_type='node',
+            entity_id=request.uuid,
+            data={
+                'group_id': request.group_id,
+                'name': request.name,
+                'summary': request.summary,
+            },
+            metadata={'source': 'entity_node_endpoint'}
+        )
+    
     return node
 
 

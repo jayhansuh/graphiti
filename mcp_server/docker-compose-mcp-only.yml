@@ -1,0 +1,20 @@
+services:
+  graphiti-mcp:
+    image: zepai/knowledge-graph-mcp:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - path: .env
+        required: false
+    network_mode: host  # Use host network to connect to local Neo4j
+    environment:
+      - NEO4J_URI=bolt://localhost:7687  # Connect to existing Neo4j
+      - NEO4J_USER=${NEO4J_USER:-neo4j}
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD:-password}  # Match the server's password
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - MODEL_NAME=${MODEL_NAME:-gpt-4o-mini}
+      - PATH=/root/.local/bin:${PATH}
+      - SEMAPHORE_LIMIT=${SEMAPHORE_LIMIT:-10}
+      - FASTMCP_PORT=8001  # Run MCP on port 8001
+    command: ["uv", "run", "graphiti_mcp_server.py", "--transport", "sse", "--host", "0.0.0.0"]

@@ -1,0 +1,18 @@
+[Unit]
+Description=Graphiti S3 Backup Service
+After=network.target
+
+[Service]
+Type=oneshot
+User=ec2-user
+Group=ec2-user
+WorkingDirectory=/home/ec2-user/graphiti/server
+Environment="PATH=/home/ec2-user/.pyenv/shims:/usr/local/bin:/usr/bin:/bin"
+EnvironmentFile=/home/ec2-user/graphiti/server/.env
+ExecStart=/home/ec2-user/.pyenv/shims/python /home/ec2-user/graphiti/server/scripts/backup_to_s3.py
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=graphiti-backup
+
+[Install]
+WantedBy=multi-user.target

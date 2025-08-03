@@ -171,5 +171,9 @@ cache.db*
 server/test_users.db
 server/docs/
 server/register_*_docs.py
+server/register_docs_to_kb.py
 server/env.production
 server/API_CREDENTIALS.md
+server/AUTH_*.md
+server/*_AUTH_*.md
+server/.env.s3

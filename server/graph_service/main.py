@@ -1,4 +1,5 @@
 import logging
+import os
 from contextlib import asynccontextmanager
 
 from typing import Union
@@ -12,15 +13,18 @@ from graph_service.config import get_settings
 from graph_service.auth import get_current_user_required, verify_api_key
 from graph_service.models.database import get_engine, Base, get_db
 from graph_service.models.user import User
-from graph_service.routers import ingest, oauth, retrieve
+from graph_service.routers import ingest, oauth, retrieve, backup
 from graph_service.services.ownership_service import OwnershipService
 from graph_service.zep_graphiti import initialize_graphiti, ZepGraphitiDep
 
 logger = logging.getLogger(__name__)
 
+# Global variable to store backup worker
+backup_worker = None
+
 
 @asynccontextmanager
-async def lifespan(_: FastAPI):
+async def lifespan(app: FastAPI):
     settings = get_settings()
     
     # Initialize database
@@ -30,8 +34,82 @@ async def lifespan(_: FastAPI):
     
     # Initialize Graphiti
     await initialize_graphiti(settings)
+    
+    # Initialize backup worker if continuous backup is enabled
+    global backup_worker
+    if os.getenv('ENABLE_CONTINUOUS_BACKUP', 'true').lower() == 'true':
+        try:
+            from graph_service.backup import S3BackupService, BackupWorker
+            from graph_service.dependencies import get_neo4j_config, get_postgres_config
+            
+            s3_service = S3BackupService(
+                bucket_name=os.getenv('S3_BACKUP_BUCKET', 'graphiti-backups-test'),
+                region=os.getenv('AWS_REGION', 'ap-northeast-3'),
+                aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+                aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
+            )
+            
+            neo4j_config = get_neo4j_config()
+            postgres_config = get_postgres_config()
+            
+            backup_worker = BackupWorker(
+                s3_service=s3_service,
+                neo4j_config=neo4j_config,
+                postgres_config=postgres_config,
+                sync_interval=int(os.getenv('BACKUP_SYNC_INTERVAL', '60')),
+                enable_full_backup=os.getenv('ENABLE_FULL_BACKUP', 'true').lower() == 'true',
+                full_backup_interval=int(os.getenv('FULL_BACKUP_INTERVAL', '3600')),
+            )
+            
+            await backup_worker.start()
+            logger.info("Started continuous backup worker")
+            
+            # Store backup worker in app state for access in endpoints
+            app.state.backup_worker = backup_worker
+            
+        except Exception as e:
+            logger.error(f"Failed to start backup worker: {e}")
+    
+    # Check if we need to restore from S3 backup on startup
+    if os.getenv('RESTORE_FROM_S3_ON_STARTUP', 'false').lower() == 'true':
+        try:
+            from graph_service.backup import S3BackupService, RestoreService
+            from graph_service.dependencies import get_neo4j_config, get_postgres_config
+            
+            if not 's3_service' in locals():
+                s3_service = S3BackupService(
+                    bucket_name=os.getenv('S3_BACKUP_BUCKET', 'graphiti-backups-test'),
+                    region=os.getenv('AWS_REGION', 'ap-northeast-3'),
+                    aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+                    aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
+                )
+                
+                neo4j_config = get_neo4j_config()
+                postgres_config = get_postgres_config()
+            
+            restore_service = RestoreService(
+                s3_service=s3_service,
+                neo4j_uri=neo4j_config['uri'],
+                neo4j_username=neo4j_config['username'],
+                neo4j_password=neo4j_config['password'],
+                neo4j_database=neo4j_config.get('database', 'neo4j'),
+                postgres_dsn=postgres_config['dsn'],
+            )
+            
+            result = await restore_service.initialize_from_latest_backup()
+            if result:
+                logger.info(f"Successfully initialized from S3 backup: {result}")
+        except Exception as e:
+            logger.error(f"Failed to initialize from S3 backup: {e}")
+            # Continue startup even if restore fails
+    
     yield
     # Shutdown
+    # Stop backup worker if running
+    if backup_worker:
+        await backup_worker.stop()
+        logger.info("Stopped backup worker")
+    
     # No need to close Graphiti here, as it's handled per-request
 
 
@@ -43,6 +121,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 app.include_router(retrieve.router)
 app.include_router(ingest.router)
 app.include_router(oauth.router)
+app.include_router(backup.router)
 
 
 @app.get('/')
