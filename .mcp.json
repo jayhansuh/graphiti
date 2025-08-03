@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "graphiti": {
+      "transport": "sse",
+      "url": "https://kb.agent-anywhere.com/sse"
+    }
+  }
+}
