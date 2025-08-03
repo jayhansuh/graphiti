@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Graphiti - Login</title>
+    <link rel="stylesheet" href="/static/css/login.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <div class="logo-section">
+                <h1 class="logo">Graphiti</h1>
+                <p class="tagline">AI-Powered Knowledge Graph Platform</p>
+            </div>
+            
+            <div class="login-section">
+                <h2>Welcome Back</h2>
+                <p class="subtitle">Sign in to access your knowledge graphs</p>
+                
+                <div class="oauth-buttons">
+                    <button class="oauth-btn google-btn" onclick="loginWithGoogle()">
+                        <i class="fab fa-google"></i>
+                        <span>Continue with Google</span>
+                    </button>
+                    
+                    <button class="oauth-btn github-btn" onclick="loginWithGitHub()">
+                        <i class="fab fa-github"></i>
+                        <span>Continue with GitHub</span>
+                    </button>
+                </div>
+                
+                <div class="divider">
+                    <span>OR</span>
+                </div>
+                
+                <div class="api-key-section">
+                    <form id="apiKeyForm" onsubmit="loginWithApiKey(event)">
+                        <label for="apiKey">API Key</label>
+                        <input type="password" id="apiKey" name="apiKey" placeholder="Enter your API key" required>
+                        <button type="submit" class="submit-btn">Sign in with API Key</button>
+                    </form>
+                </div>
+                
+                <div class="help-section">
+                    <p>Don't have an account? <a href="#" onclick="showSignupInfo()">Get Started</a></p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="features-section">
+            <div class="feature">
+                <i class="fas fa-shield-alt"></i>
+                <h3>Secure Authentication</h3>
+                <p>OAuth 2.0 with Google and GitHub</p>
+            </div>
+            <div class="feature">
+                <i class="fas fa-project-diagram"></i>
+                <h3>Knowledge Graphs</h3>
+                <p>Build and query temporal knowledge graphs</p>
+            </div>
+            <div class="feature">
+                <i class="fas fa-users"></i>
+                <h3>Collaboration</h3>
+                <p>Share and collaborate on documents</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Error/Success Messages -->
+    <div id="messageBox" class="message-box"></div>
+    
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <p>Authenticating...</p>
+    </div>
+    
+    <script src="/static/js/login.js"></script>
+</body>
+</html>

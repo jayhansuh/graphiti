@@ -7,15 +7,30 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/style.css">
+    <script>
+        // Check authentication before page loads
+        (function() {
+            const token = localStorage.getItem('graphiti_token');
+            const apiKey = localStorage.getItem('graphiti_api_key');
+            
+            if (!token && !apiKey) {
+                // Redirect to login page immediately
+                window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+            }
+        })();
+    </script>
 </head>
 <body>
     <div class="container">
         <header>
             <h1>🌐 Graphiti API Playground</h1>
-            <div class="stats" id="stats">
-                <span>Entities: <strong id="entity-count">0</strong></span>
-                <span>Episodes: <strong id="episode-count">0</strong></span>
-                <span>Relations: <strong id="relation-count">0</strong></span>
+            <div class="header-right">
+                <div class="stats" id="stats">
+                    <span>Entities: <strong id="entity-count">0</strong></span>
+                    <span>Episodes: <strong id="episode-count">0</strong></span>
+                    <span>Relations: <strong id="relation-count">0</strong></span>
+                </div>
+                <button class="logout-btn" onclick="logout()">Logout</button>
             </div>
         </header>
 
